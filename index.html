@@ -5,6 +5,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CareerFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Eagle+Lake&family=Orbitron:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
   --bg: #020304;
@@ -36,18 +39,27 @@
 
   /* Header */
   header {
-    padding: 32px 0 16px;
+    padding: 16px 0 8px;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
   }
   .logo {
     display: flex;
     align-items: center;
   }
-  .logo img {
-    height: 40px;
-    display: block;
+  .logo-text {
+    font-size: 3.75rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    font-family: "Orbitron", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .logo-text em {
+    font-style: normal;
+    color: var(--accent);
+    font-family: "Eagle Lake", ui-serif, Georgia, "Times New Roman", serif;
+    font-weight: 400;
   }
   .badge {
   font-size: 0.7rem;
@@ -458,6 +470,7 @@
 
   /* Responsive */
   @media (max-width: 600px) {
+    .logo-text { font-size: 2.4rem; text-align: center; }
     .salary-row { grid-template-columns: 1fr; }
     .compat-grid { grid-template-columns: 1fr; }
     .bar-row { grid-template-columns: 100px 1fr 60px; }
@@ -472,7 +485,7 @@
   <!-- Header -->
   <header>
   <div class="logo">
-    <img src="newlogo.png" alt="CareerFlow logo">
+    <div class="logo-text">Career<em>flow</em></div>
   </div>
   <div class="badge">AI-Powered Guidance</div>
   </header>
@@ -939,7 +952,7 @@ function fmt(n) {
 }
 
 // ——— Generate ———
-function generateCareer() {
+async function generateCareer() {
   const profile = {
     qual: document.getElementById('qualification').value,
     field: document.getElementById('field').value,
@@ -960,13 +973,25 @@ function generateCareer() {
   document.getElementById('results').style.display = 'none';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  setTimeout(() => {
-    const data = generateCareerData(profile);
+  try {
+    const res = await fetch('http://localhost:3000/api/generate-career', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(profile),
+    });
+    if (!res.ok) throw new Error(`AI request failed (${res.status})`);
+    const data = await res.json();
+
     document.getElementById('loadingSection').classList.remove('visible');
     document.getElementById('results').style.display = 'block';
     renderResults(data, profile);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, 2200);
+  } catch (e) {
+    document.getElementById('loadingSection').classList.remove('visible');
+    document.getElementById('inputSection').style.display = 'block';
+    goStep(1);
+    alert(`Could not generate AI results.\\n\\n${e?.message || e}`);
+  }
 }
 
 function restart() {
